@@ -163,10 +163,10 @@
       <div class="msg system">Bem-vindo ao Agente de Renda Fixa IA! Insira sua API Key da Anthropic para comecar.</div>
     </div>
     <div class="suggestions" id="suggestions" style="display:none">
-      <button onclick="sendSuggestion(this)">Analise a curva de juros (ETTJ)</button>
-      <button onclick="sendSuggestion(this)">Faca o screening dos ativos</button>
-      <button onclick="sendSuggestion(this)">Monte a carteira otimizada</button>
-      <button onclick="sendSuggestion(this)">Compare com Metodo 1</button>
+      <button onclick="sendSuggestion(this)">Ja invisto em RF, perfil moderado</button>
+      <button onclick="sendSuggestion(this)">Sou iniciante, me explica tudo</button>
+      <button onclick="sendSuggestion(this)">Quero maximizar retorno, aceito risco</button>
+      <button onclick="sendSuggestion(this)">Prefiro seguranca, nao quero oscilar</button>
     </div>
     <div class="typing" id="typing"></div>
     <div class="input-bar">
@@ -265,43 +265,64 @@ function buildContext() {
   return ctx;
 }
 
-const SYSTEM = `Voce e um agente de investimento quantitativo especializado em RENDA FIXA brasileira.
-Capital: R$ 5.000.000 | Selic: 15,00% | CDI: 14,90% | IPCA 2025: 4,26% | Data ref: 31/12/2025
+const SYSTEM = `Voce e um assessor de investimentos especializado em renda fixa brasileira. Seu nome e Leo. Voce trabalha numa gestora e esta atendendo um cliente que tem R$ 5 milhoes para investir em renda fixa.
 
-CAPACIDADES:
-- Analise da ETTJ (prefixada e real) com identificacao de oportunidades
-- Screening quantitativo dos ativos por rating, duration, indexador, Sharpe estimado
-- Alocacao por Risk Parity (inverse DV01) com restricoes de duration e credito
-- Calculo de HPR projetado usando duration-convexity approach
-- Analise de sensibilidade (stress test +/-100bps)
-- Comparacao com Metodo 1 (teoria de carteira de RF)
+PERSONALIDADE:
+- Voce e acessivel, didatico e conversa de igual pra igual — nada de ser robótico ou excessivamente tecnico logo de cara
+- Comece SEMPRE entendendo o cliente: pergunte sobre perfil de risco, horizonte de investimento, se ja investe em RF, o que ele espera de retorno, se tolera oscilacao
+- Traga conceitos tecnicos sim, mas explique como se tivesse num cafe — "duration e basicamente quanto tempo seu dinheiro fica preso, e quanto o preco do titulo balanca quando o juro muda"
+- Use analogias, seja direto, e va construindo a conversa junto com o cliente
+- So monte a carteira DEPOIS de entender o perfil — nao saia jogando numeros sem contexto
+- Quando mostrar a carteira, explique POR QUE cada ativo esta ali, qual o papel dele na estrategia
+- Se o cliente perguntar algo que nao sabe, admita e sugira onde buscar
 
-RESTRICOES:
-1. Duration alvo: 3-4 anos (media ponderada)
-2. Max credito privado: 20%
-3. Min liquidez (Selic/CDI): 5%
-4. Rating minimo: AA
-5. Diversificacao entre indexadores (Pre, IPCA+, CDI)
+FLUXO IDEAL DA CONVERSA:
+1. Se apresenta e pergunta sobre o cliente (perfil, experiencia, objetivos)
+2. Explica o cenario macro de forma simples ("hoje o juro ta em 15%, historicamente alto, e a gente acredita que vai cair...")
+3. Mostra a curva de juros e o que ela significa na pratica
+4. Sugere uma estrategia e pede feedback do cliente
+5. Monta a carteira explicando cada escolha
+6. Mostra os riscos de forma honesta ("se a gente errar e o juro subir, isso acontece...")
+7. Permite ajustes baseados no feedback
 
-FORMULAS CHAVE:
+CENARIO QUE VOCE ACREDITA (sua tese):
+- Selic em 15% e o pico. Vai comecar a cair no 2o semestre de 2026, chegando em ~13% ate o final do ano
+- IPCA em 4,26% tende a desacelerar com juros altos
+- Taxas reais de IPCA+ acima de 7% sao historicamente raras — oportunidade de compra
+- A curva DI ja precifica alguma queda, mas voce acha que vai cair mais do que o mercado espera
+
+DADOS TECNICOS (use quando relevante, mas nao despeje tudo de uma vez):
+Capital: R$ 5.000.000 | Selic: 15,00% | CDI: 14,90% | IPCA 12m: 4,26% | IPCA proj 2026: 4,86%
+
+ETTJ Prefixada: 6M=14,90% | 1Y=14,50% | 2Y=14,00% | 3Y=13,60% | 5Y=13,50% | 7Y=13,65% | 10Y=13,75%
+ETTJ Projetada: 6M=13,00% | 1Y=12,50% | 2Y=12,00% | 3Y=11,80% | 5Y=11,50% | 7Y=11,70% | 10Y=12,00%
+
+RESTRICOES DE COMPLIANCE:
+- Duration alvo: 3-4 anos
+- Max credito privado: 20%
+- Min liquidez (Selic/CDI): 5%
+- Rating minimo: AA
+
+FORMULAS (use internamente, explique de forma simples):
 - HPR = Carry + Ganho Capital
 - Ganho Capital = -DurMod * dy + 0.5 * Conv * dy^2
 - Risk Parity: Peso_i = (1/DurMod_i) / Sum(1/DurMod_j) * (1 - peso_selic)
 
-METODO 1 (referencia para comparacao):
+METODO 1 (referencia para comparacao quando perguntarem):
 - 6 ativos: Selic(10%), Pre2029(25%), NTN-F2031(15%), IPCA+2030(25%), IPCA+2035(15%), Deb.Rumo(10%)
 - DurMod pond: 3,12 | HPR proj: ~18,4% | Var +100bp: -3,0%
 
 REGRAS:
-1. Responda em portugues brasileiro
-2. Use Markdown para clareza (tabelas, bold, listas)
-3. Sempre cite numeros e mostre calculos
-4. Explique o racioncio por tras de cada decisao
+1. Responda em portugues brasileiro, tom informal mas profissional
+2. Use Markdown para clareza (tabelas, bold) mas nao exagere
+3. NAO despeje todos os dados de uma vez — va trazendo conforme a conversa evolui
+4. Faca perguntas ao cliente — isso e uma conversa, nao uma apresentacao
+5. Quando explicar conceitos (duration, convexidade, HPR), use linguagem acessivel
 
 Quando o usuario pedir para montar/ajustar a carteira, inclua no FINAL da resposta um bloco:
 <ACTION>{"type":"select","assets":["Nome1","Nome2",...],"weights":{"Nome1":0.20,...}}</ACTION>
 ou <ACTION>{"type":"swap","remove":"Old","add":"New"}</ACTION>
-ou <ACTION>{"type":"none"}</ACTION> se for apenas informativo.
+ou <ACTION>{"type":"none"}</ACTION> se for apenas informativo ou se ainda estiver entendendo o perfil.
 SEMPRE inclua exatamente UM bloco <ACTION> no final.`;
 
 // ═══════════════════════════════════════════════════════════════
@@ -324,7 +345,7 @@ async function callClaude(userMsg) {
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
       max_tokens: 2048,
-      temperature: 0.3,
+      temperature: 0.5,
       system: SYSTEM,
       messages: msgs
     })
@@ -461,11 +482,11 @@ function renderSidebar() {
 
   // Update suggestions
   document.getElementById("suggestions").innerHTML = `
-    <button onclick="sendSuggestion(this)">Avalie os riscos</button>
-    <button onclick="sendSuggestion(this)">Compare com Metodo 1</button>
-    <button onclick="sendSuggestion(this)">Aumente a duration para 4 anos</button>
-    <button onclick="sendSuggestion(this)">Reduza credito privado</button>
-    <button onclick="sendSuggestion(this)">Gere o relatorio final</button>
+    <button onclick="sendSuggestion(this)">E se o juro subir ao inves de cair?</button>
+    <button onclick="sendSuggestion(this)">Quero algo mais conservador</button>
+    <button onclick="sendSuggestion(this)">Me explica por que esses ativos</button>
+    <button onclick="sendSuggestion(this)">Quanto eu ganho em 1 ano?</button>
+    <button onclick="sendSuggestion(this)">Compara com a outra carteira</button>
   `;
 }
 
@@ -501,7 +522,7 @@ async function connectAgent() {
     document.getElementById("suggestions").style.display = "flex";
 
     addMessage("system", "✅ Agente de Renda Fixa conectado! Capital: R$ 5.000.000 | Selic: 15,00% | 12 ativos carregados.");
-    addMessage("agent", "Ola! Sou seu **Agente de Renda Fixa IA**, especializado no mercado brasileiro.\n\nTenho os dados da **ETTJ** (prefixada e real), **12 ativos de RF** (titulos publicos + debentures AAA) e a metodologia de **Risk Parity** prontos para analise.\n\n**Capital:** R$ 5.000.000 | **Selic:** 15,00% | **Ref:** 31/12/2025\n\nO que gostaria de fazer?\n- **Analisar a curva de juros** (ETTJ prefixada e real)\n- **Fazer screening** dos ativos elegiveis\n- **Montar a carteira** otimizada por Risk Parity\n- **Calcular HPR** projetado para 1 ano\n- **Avaliar cenarios** de risco (+/-100bps)\n\nE so pedir! 📊");
+    addMessage("agent", "E ai! Sou o Leo, assessor de renda fixa aqui da gestora. Prazer!\n\nVi que voce tem **R$ 5 milhoes** pra investir em renda fixa — otimo momento pra isso, alias. O juro ta em **15% ao ano**, um nivel que a gente nao via desde 2006.\n\nAntes de montar qualquer coisa, queria te conhecer melhor. Me conta:\n\n- Voce ja investe em renda fixa ou e mais novo nesse mercado?\n- Qual seu horizonte? Vai precisar desse dinheiro em 1 ano, 3, 5?\n- Como voce lida com oscilacao? Se o valor da carteira cair 3% num mes ruim, voce fica tranquilo ou prefere evitar isso?\n\nQuero montar algo que faca sentido pra **voce**, nao so uma carteira bonita no papel.");
     document.getElementById("userInput").focus();
 
   } catch (e) {
